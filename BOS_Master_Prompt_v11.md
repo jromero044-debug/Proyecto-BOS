@@ -935,6 +935,48 @@ El endpoint `GET /balance` retorna:
 
 ---
 
+## 16. Módulo Coceo
+
+Sistema de memoria estratégica para CEOs. Corre sobre la misma
+infraestructura del BOS (shopify_db, Azure Functions Python 3.11).
+
+### Tablas
+Todas con prefijo mirador_coceo_* en shopify_db:
+- mirador_coceo_entries — ideas, reflexiones, insights del CEO
+- mirador_coceo_meetings — minutas de reunión
+- mirador_coceo_projects — proyectos estratégicos
+- mirador_coceo_decisions — decisiones con rationale
+- mirador_coceo_followups — pendientes con vencimiento
+- mirador_coceo_empresa — perfil por marca (escalable multi-brand)
+- mirador_coceo_locales — ubicaciones físicas y canales
+- mirador_coceo_operacional — aprendizajes operativos de locales
+
+### Vista IA
+vw_mirador_coceo_ai_context — pre-agrega todo el contexto en una query.
+Claude la lee al inicio de cada sesión vía GET /coceo/context.
+
+### Endpoints (blueprints/coceo.py)
+GET  /coceo/context
+GET  /coceo/pending
+POST /coceo/entry
+POST /coceo/meeting
+POST /coceo/decision
+POST /coceo/project
+POST /coceo/operacional
+GET/PUT /coceo/empresa
+GET/POST /coceo/locales
+
+### Auth
+Header X-Coceo-Key validado contra env var COCEO_SECRET_KEY.
+Header X-Coceo-Brand para isolación por marca (mushkana / cebala).
+
+### MCP Server
+coceo_mcp.py en la raíz — expone las 9 tools para Claude Desktop/Cowork.
+Requiere Python ≥3.10 y venv separado (.venv-mcp).
+Configurar en claude_desktop_config.json con COCEO_SECRET_KEY y COCEO_BRAND.
+
+---
+
 Documentación completa del sistema:
 https://github.com/jromero044-debug/Proyecto-BOS/blob/main/BOS_Master_Prompt_v11.md
 Leer antes de cualquier tarea de arquitectura.
