@@ -935,45 +935,56 @@ El endpoint `GET /balance` retorna:
 
 ---
 
-## 16. Módulo Coceo
+## 16. Coceo — Capa de inteligencia estratégica
 
-Sistema de memoria estratégica para CEOs. Corre sobre la misma
-infraestructura del BOS (shopify_db, Azure Functions Python 3.11).
+### Qué es y para qué sirve
 
-### Tablas
-Todas con prefijo mirador_coceo_* en shopify_db:
-- mirador_coceo_entries — ideas, reflexiones, insights del CEO
-- mirador_coceo_meetings — minutas de reunión
-- mirador_coceo_projects — proyectos estratégicos
-- mirador_coceo_decisions — decisiones con rationale
-- mirador_coceo_followups — pendientes con vencimiento
-- mirador_coceo_empresa — perfil por marca (escalable multi-brand)
-- mirador_coceo_locales — ubicaciones físicas y canales
-- mirador_coceo_operacional — aprendizajes operativos de locales
+Coceo es la capa de memoria estratégica del BOS: el lugar donde el CEO
+(Cebala o Mushkana) piensa en voz alta con Claude — ideas, reuniones,
+decisiones, proyectos, pendientes — y esas notas quedan persistidas y
+disponibles en cualquier sesión futura, en vez de perderse en un chat que
+termina. No reemplaza al dashboard operativo del BOS; es la contraparte
+"ejecutiva" de ese sistema, pensada para conversación libre en vez de
+formularios.
 
-### Vista IA
-vw_mirador_coceo_ai_context — pre-agrega todo el contexto en una query.
-Claude la lee al inicio de cada sesión vía GET /coceo/context.
+### Cómo se integra con el BOS
 
-### Endpoints (blueprints/coceo.py)
-GET  /coceo/context
-GET  /coceo/pending
-POST /coceo/entry
-POST /coceo/meeting
-POST /coceo/decision
-POST /coceo/project
-POST /coceo/operacional
-GET/PUT /coceo/empresa
-GET/POST /coceo/locales
+Corre sobre la misma infraestructura que el resto del BOS — mismo Azure
+Functions app (`mirador-bos-prod`), misma base (`shopify_db`), mismo patrón
+de blueprints (`blueprints/coceo.py`). No es un sistema aparte: es un
+blueprint más, con su propia autenticación (`X-Coceo-Key` +
+`X-Coceo-Email`, independiente de Easy Auth/roles del dashboard) porque lo
+consume un agente de IA, no un usuario logueado en el navegador. El
+aislamiento entre Cebala y Mushkana se resuelve server-side por email
+(tabla `mirador_coceo_usuarios`), nunca por un valor que mande el cliente.
 
-### Auth
-Header X-Coceo-Key validado contra env var COCEO_SECRET_KEY.
-Header X-Coceo-Brand para isolación por marca (mushkana / cebala).
+Se accede vía dos servidores MCP (`coceo_mcp.py` local por stdio,
+`coceo_mcp_server.py` remoto por HTTP/SSE en Azure Container Apps) que
+son, en esencia, clientes HTTP de `blueprints/coceo.py` — no tienen acceso
+directo a la base.
 
-### MCP Server
-coceo_mcp.py en la raíz — expone las 9 tools para Claude Desktop/Cowork.
-Requiere Python ≥3.10 y venv separado (.venv-mcp).
-Configurar en claude_desktop_config.json con COCEO_SECRET_KEY y COCEO_BRAND.
+**Documentación técnica completa** (endpoints, tablas, auth, MCP server,
+multi-brand): [`docs/COCEO_API.md`](docs/COCEO_API.md).
+
+### Roadmap — qué le falta para ver el resto del BOS
+
+Hoy Coceo es memoria pura (lo que el CEO escribe/dicta); todavía no lee los
+datos operativos que ya existen en el resto del sistema. F1 = disponible
+ahora, F2 = próximo paso planeado.
+
+| Módulo BOS      | Disponible en Coceo F1 | Disponible en Coceo F2 |
+|------------------|:----------------------:|:----------------------:|
+| Shopify orders   | ✗ *(placeholder sin datos — ver nota)* | ✓ |
+| Gastos           | ✗                       | ✓                       |
+| Inventario       | ✗                       | ✓                       |
+| Marketing Meta   | ✗                       | ✓                       |
+| Clientes RFM     | ✗                       | ✓                       |
+| COGS             | ✗                       | ✓                       |
+
+*Shopify orders:* `vw_mirador_coceo_ai_context` y `GET /coceo/context` ya
+tienen el campo `shopify` reservado (`record_type: "shopify_snapshot"`),
+pero la vista no tiene ninguna fuente que lo alimente todavía — hoy siempre
+devuelve `{}`. Es el gancho listo para F2, no una feature F1 activa.
 
 ---
 
