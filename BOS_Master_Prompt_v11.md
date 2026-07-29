@@ -134,6 +134,7 @@ app.register_functions(mermas_bp)
 | `mermas.py` | Registro de mermas/daños con fotos |
 | `procedures.py` | Knowledge base de procedimientos (PDF → Claude) |
 | `cupones.py` | Integración cupones Itaú |
+| `wip.py` | WIP/Materia Prima: OC → despachos → importaciones → OS → transformaciones (ver sección 17) |
 
 ### 6.3 Timers programados
 
@@ -920,6 +921,7 @@ El endpoint `GET /balance` retorna:
 - Marketing: Meta Ads + Google Ads con alertas
 - Análisis de clientes: RFM, cohorts, cross-brand
 - Compras: PO + recepciones con ajuste de inventario Shopify
+- WIP/Materia Prima: OC → despachos → importaciones (costeo prorrateado) → OS → transformaciones, con ajuste real de inventario Shopify (ver sección 17)
 - Finanzas completo: gastos, vendors, partners, receivables, préstamos
 - Mensajería omnicanal con análisis IA
 - Knowledge base de procedimientos (PDF → Claude)
@@ -985,6 +987,40 @@ ahora, F2 = próximo paso planeado.
 tienen el campo `shopify` reservado (`record_type: "shopify_snapshot"`),
 pero la vista no tiene ninguna fuente que lo alimente todavía — hoy siempre
 devuelve `{}`. Es el gancho listo para F2, no una feature F1 activa.
+
+---
+
+## 17. WIP / Materia Prima
+
+### Qué es y para qué sirve
+
+Mushkana importa blanks desde China y los manda a bordar/estampar al vendor
+Tipy; Cebala importa maderas desde China y las manda a distintos artesanos.
+En ambos casos el producto terminado termina siendo un SKU de Shopify, pero
+todo el proceso previo — materia prima, tránsito, importación, costeo,
+procesamiento externo — no vivía en ningún sistema. Este módulo lo trackea
+de punta a punta: Orden de Compra → Despacho (embarque, puede ser parcial)
+→ Importación (parcial, genera el lote final y capitalize costos
+prorrateados de flete/seguro/aduana) → Orden de Servicio (envío a vendor
+procesador, con reserva de stock) → Transformación (consume la materia
+prima, calcula el costo unitario final, y ajusta el inventario **real** de
+Shopify).
+
+### Cómo se integra con el BOS
+
+Mismo blueprint pattern que el resto del sistema (`blueprints/wip.py`, 41
+endpoints sobre 24 tablas `wip_*`), misma Azure Functions app
+(`mirador-bos-prod`), misma base (`shopify_db`), mismo `dual_auth` con los
+tres roles estándar (OPERATIVO/ENCARGADO/ADMIN). Toda acción "forward"
+(confirmar una OC, embarcar un despacho, etc.) tiene su reversa simétrica
+(`unconfirm`, `unship`, `reverse`, etc.), bloqueada con `400` si hay
+dependencias aguas abajo que lo impiden — mismo criterio que
+`purchasing.py::reverse_goods_receipt`. El ajuste final de inventario en
+Shopify usa el mismo helper REST (`inventory_levels/adjust.json`, tolerante
+a fallos) que ya usa el módulo de Compras para las recepciones de mercadería.
+
+**Documentación técnica completa** (los 41 endpoints, las 24 tablas, la
+lógica de costeo prorrateado y de reservas): [`docs/WIP_API.md`](docs/WIP_API.md).
 
 ---
 
