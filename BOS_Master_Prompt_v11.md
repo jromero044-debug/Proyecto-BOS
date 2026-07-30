@@ -1,5 +1,13 @@
 # BOS Master Prompt — v11
 
+> ⚠️ **DISCONTINUADO.** Este documento dejó de mantenerse — la documentación viva del
+> backend ahora es [`CLAUDE.md`](https://github.com/jromero044-debug/mirador-bos/blob/main/CLAUDE.md)
+> en el repo `mirador-bos`, con el detalle técnico de los módulos WIP y Coceo en
+> [`docs/WIP_API.md`](https://github.com/jromero044-debug/mirador-bos/blob/main/docs/WIP_API.md)
+> y [`docs/COCEO_API.md`](https://github.com/jromero044-debug/mirador-bos/blob/main/docs/COCEO_API.md).
+> Se mantiene este archivo solo como referencia histórica (estado del sistema a julio 2026)
+> — puede tener información desactualizada, no confiar en él para trabajo nuevo.
+
 > **Estado real del sistema a julio 2026.**
 > Este documento describe el sistema MiradorCT BOS tal como existe en producción hoy.
 > Cualquier Claude que lo lea puede entender el sistema completo y continuar el trabajo sin explorar el código.
@@ -1024,6 +1032,6 @@ lógica de costeo prorrateado y de reservas): [`docs/WIP_API.md`](docs/WIP_API.m
 
 ---
 
-Documentación completa del sistema:
-https://github.com/jromero044-debug/Proyecto-BOS/blob/main/BOS_Master_Prompt_v11.md
-Leer antes de cualquier tarea de arquitectura.
+Documentación completa del sistema (viva, actualizada):
+https://github.com/jromero044-debug/mirador-bos/blob/main/CLAUDE.md
+Este documento (v11) quedó discontinuado — leer el CLAUDE.md de arriba en su lugar.
